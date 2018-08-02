@@ -134,9 +134,10 @@ def get_batches(x, y, n_batch=10):
     split datasets(x, y) to n small batches
     :param x: data of datasets
     :param y: label of datasets
-    :param batch_size: number of batch
+    :param n_batch: number of batch
     :return:
     """
+
     batch_size = len(x) // n_batch
     for ii in range(0, n_batch*batch_size, batch_size):
         # if this batch isn't the last batch, it should have data of batch_size
@@ -147,6 +148,50 @@ def get_batches(x, y, n_batch=10):
             X, Y = x[ii:], y[ii:]
 
         yield X, Y
+
+
+def compute_cost(Y, output):
+    """
+    compute the cost for the model
+    :param Y: the datasets labels
+    :param output: fine-tuning model output
+    :return: cost
+    """
+
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=Y, logits=output)
+    cost = tf.reduce_mean(cross_entropy)
+
+    return cost
+
+
+def compute_accuracy(Y, output):
+    """
+    compute the accuracy for the model
+    :param Y: the datasets lables
+    :param output: the fine-tuning model output
+    :return: accuracy
+    """
+
+    prediction = tf.nn.softmax(output)
+    correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
+    accuracy = tf.reduce_mean(correct_prediction, tf.float32)
+
+    return accuracy
+
+
+def finetuning_model(X, Y):
+    """
+    fine tuning the vgg16 model for training the flower recognition
+    :param X: the datasets input
+    :param Y: the dataset label
+    :return: the fine tuning model output
+    """
+
+    # add densely connected layers
+    fc = tf.contrib.layers.full_connected(X, 256)
+    output = tf.contrib.layers.full_connected(fc, Y.shape[1], activation_fn=None)
+
+    return output
 
 
 def main():
