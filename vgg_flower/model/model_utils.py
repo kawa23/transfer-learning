@@ -158,17 +158,17 @@ def get_batches(x, y, n_batch=10):
         yield X, Y
 
 
-def finetuning_model(X, Y):
+def finetuning_model(X, label_num):
     """
     fine tuning the vgg16 model for training the flower recognition
     :param X: the datasets input
-    :param Y: the dataset label
+    :param label_num: the label number
     :return: the fine tuning model output
     """
 
     # add densely connected layers
     fc = tf.contrib.layers.fully_connected(X, 256)
-    output = tf.contrib.layers.fully_connected(fc, int(Y.shape[1]), activation_fn=None)
+    output = tf.contrib.layers.fully_connected(fc, label_num, activation_fn=None)
 
     return output
 

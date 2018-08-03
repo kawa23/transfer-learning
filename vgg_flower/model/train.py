@@ -27,7 +27,7 @@ def main():
     X = tf.placeholder(tf.float32, [None, features.shape[1]])
     Y = tf.placeholder(tf.int64, [None, train_y.shape[1]])
 
-    output = model_utils.finetuning_model(X, Y)
+    output = model_utils.finetuning_model(X, int(Y.shape[1]))
 
     cost = model_utils.compute_cost(Y, output)
     optimizer = tf.train.AdamOptimizer().minimize(cost)
