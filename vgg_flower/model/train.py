@@ -1,5 +1,6 @@
 import os
 import threading
+import datetime
 import tensorflow as tf
 
 from vgg_flower.model import model_utils
@@ -34,21 +35,35 @@ def main():
     global_step = 0
     epochs = 20
 
+    # train model
+    saver = tf.train.Saver()
+    model_path = os.path.join(current_path, 'log')
+    ckpt = tf.train.get_checkpoint_state(model_path)
+    initial_epoch = 0
+    time_begin = datetime.datetime.now()
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for epoch in range(epochs):
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            initial_epoch = int(ckpt.model_checkpoint_path.rsplit('-', 1)[1])
+        for epoch in range(initial_epoch, epochs):
             for batch_xs, batch_ys in model_utils.get_batches(train_x, train_y):
                 global_step += 1
                 train_feed = {X: batch_xs, Y:batch_ys}
                 _, train_cost = sess.run([optimizer, cost], feed_dict=train_feed)
-                print("Epoch: %3d/%3d, global step: %3d, Training cost: %.5f" %
+                print("epoch: %3d/%3d, global step: %3d, Training cost: %.5f" %
                       ((epoch+1), epochs, global_step, train_cost))
 
+            # save the trained model each epoch
+            saver.save(sess, model_path)
             # compute validation accuracy each epoch
             val_feed = {X: val_x, Y: val_y}
             val_acc = sess.run(accuracy, feed_dict=val_feed)
-            print("Epoch: %3d/%3d, global step: %3d, Validation accuracy: %.4f" %
+            print("epoch: %3d/%3d, global step: %3d, Validation accuracy: %.4f" %
                   ((epoch+1), epochs, global_step, val_acc))
+    time_end = datetime.datetime.now()
+    print('training model finished: %.0f' % ((time_end-time_begin).total_seconds()))
 
 
 if __name__ == '__main__':
