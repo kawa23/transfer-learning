@@ -44,19 +44,22 @@ def main():
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+        # start training begin latest checkpoint
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
             initial_epoch = int(ckpt.model_checkpoint_path.rsplit('-', 1)[1])
+
         for epoch in range(initial_epoch, epochs):
             for batch_xs, batch_ys in model_utils.get_batches(train_x, train_y):
                 global_step += 1
-                train_feed = {X: batch_xs, Y:batch_ys}
+                train_feed = {X: batch_xs, Y: batch_ys}
                 _, train_cost = sess.run([optimizer, cost], feed_dict=train_feed)
                 print("epoch: %3d/%3d, global step: %3d, Training cost: %.5f" %
                       ((epoch+1), epochs, global_step, train_cost))
 
             # save the trained model each epoch
-            saver.save(sess, model_path)
+            saver.save(sess, os.path.join(model_path, 'my-model'), global_step=epoch)
+
             # compute validation accuracy each epoch
             val_feed = {X: val_x, Y: val_y}
             val_acc = sess.run(accuracy, feed_dict=val_feed)
@@ -64,6 +67,13 @@ def main():
                   ((epoch+1), epochs, global_step, val_acc))
     time_end = datetime.datetime.now()
     print('training model finished: %.0f' % ((time_end-time_begin).total_seconds()))
+
+    # test model
+    with tf.Session() as sess:
+        saver.restore(sess, model_path)
+        test_feed = {X: test_x, Y: test_y}
+        test_acc = sess.run(accuracy, feed_dict=test_feed)
+        print("test accuracy: %.4f" % test_acc)
 
 
 if __name__ == '__main__':
