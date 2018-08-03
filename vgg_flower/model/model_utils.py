@@ -1,4 +1,6 @@
 import os
+import sys
+import datetime
 import tensorflow as tf
 import numpy as np
 import csv
@@ -33,12 +35,15 @@ def compute_vgg16_feature():
     input = tf.placeholder(tf.float32, [None, 224, 224, 3])
     with tf.name_scope("content_vgg"):
         vgg.build(input)
+    time_begin = datetime.datetime.now()
     with tf.Session() as sess:
         # compute feature for each type of flowers
+        print('image processed starting')
         for each in classes:
-            print("Starting {} images".format(each))
+            print('starting %s images processed...' % each)
             class_path = os.path.join(data_dir, each)
             files = os.listdir(class_path)
+            files_len = len(files)
             for ii, file in enumerate(files, 1):
                 # load image to batch list
                 img = utils.load_image(os.path.join(class_path, file))
@@ -57,7 +62,11 @@ def compute_vgg16_feature():
                         features = np.concatenate((features, features_batch))
                     # clear batch for next batch to compute feature
                     batch = []
-                    print('{} images precoessed'.format(ii))
+                    sys.stdout.write('\r>> %d/%d %s images processed' % (ii, files_len, each))
+                    sys.stdout.flush()
+            print('\n%s image process done!' % each)
+    time_end = datetime.datetime.now()
+    print('image processed finished: %.0fs' % (time_end - time_begin).total_seconds())
 
     return features, labels
 
@@ -114,14 +123,16 @@ def divide_datasets(features, labels):
     """
 
     ss = StratifiedShuffleSplit(n_splits=1, test_size=0.2)
+    labels_vecs = onehot_labels(labels)
+
     train_idx, val_idx = next(ss.split(features, labels))
 
     half_val_len = int(len(val_idx) / 2)
     val_idx, test_idx = val_idx[:half_val_len], val_idx[half_val_len:]
 
-    train_x, train_y = features[train_idx], labels[train_idx]
-    val_x, val_y = features[val_idx], labels[val_idx]
-    test_x, test_y = features[test_idx], labels[test_idx]
+    train_x, train_y = features[train_idx], labels_vecs[train_idx]
+    val_x, val_y = features[val_idx], labels_vecs[val_idx]
+    test_x, test_y = features[test_idx], labels_vecs[test_idx]
 
     return train_x, train_y, val_x, val_y, test_x, test_y
 
@@ -185,8 +196,8 @@ def finetuning_model(X, Y):
     """
 
     # add densely connected layers
-    fc = tf.contrib.layers.full_connected(X, 256)
-    output = tf.contrib.layers.full_connected(fc, Y.shape[1], activation_fn=None)
+    fc = tf.contrib.layers.fully_connected(X, 256)
+    output = tf.contrib.layers.fully_connected(fc, int(Y.shape[1]), activation_fn=None)
 
     return output
 

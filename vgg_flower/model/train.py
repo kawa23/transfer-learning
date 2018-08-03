@@ -21,12 +21,10 @@ def main():
     else:
         features, labels = model_utils.read_datasets(features_file, labels_file)
 
-    labels_vecs = model_utils.onehot_labels(labels)
-
     train_x, train_y, val_x, val_y, test_x, test_y = model_utils.divide_datasets(features, labels)
 
     X = tf.placeholder(tf.float32, [None, features.shape[1]])
-    Y = tf.placeholder(tf.int64, [None, labels_vecs.shape[1]])
+    Y = tf.placeholder(tf.int64, [None, train_y.shape[1]])
 
     output = model_utils.finetuning_model(X, Y)
 
