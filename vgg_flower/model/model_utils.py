@@ -70,10 +70,7 @@ def save_datasets(features, labels):
     :return:
     """
 
-    with open(os.path.join(current_path, 'features.txt'), 'w') as f:
-        # writer in binary code
-        features.tofile(f)
-
+    np.save(os.path.join(current_path, 'features.npy'), features)
     with open(os.path.join(current_path, 'labels.txt'), 'w') as f:
         writer = csv.writer(f, delimiter='\n')
         writer.writerow(labels)
@@ -87,7 +84,7 @@ def read_datasets(features_file, labels_file):
     :return: features and labels
     """
 
-    features = np.fromfile(features_file, dtype=np.float)
+    features = np.load(features_file)
     with open(labels_file, 'r') as f:
         labels = [label.strip('\n') for label in f.readlines()]
 
@@ -197,9 +194,7 @@ def finetuning_model(X, Y):
 def main():
     features, labels = compute_vgg16_feature()
     save_datasets(features, labels)
-    features, labels = read_datasets(os.path.join(current_path,'features.txt'), os.path.join(current_path, 'labels.txt'))
-    print(features)
-    print(labels)
+    features, labels = read_datasets(os.path.join(current_path,'features.npy'), os.path.join(current_path, 'labels.txt'))
 
 
 if __name__ == '__main__':

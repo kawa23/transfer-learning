@@ -9,7 +9,7 @@ current_path = os.path.dirname(__file__)
 
 
 def main():
-    features_file = os.path.join(current_path, 'features.txt')
+    features_file = os.path.join(current_path, 'features.npy')
     labels_file = os.path.join(current_path, 'labels.txt')
 
     # get the features and labels
@@ -22,6 +22,7 @@ def main():
         features, labels = model_utils.read_datasets(features_file, labels_file)
 
     labels_vecs = model_utils.onehot_labels(labels)
+
     train_x, train_y, val_x, val_y, test_x, test_y = model_utils.divide_datasets(features, labels)
 
     X = tf.placeholder(tf.float32, [None, features.shape[1]])
@@ -53,4 +54,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print(current_path)
+    main()
