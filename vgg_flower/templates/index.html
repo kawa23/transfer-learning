@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>toy-recognition</title>
+    <link href="https://cdn.staticfile.org/twitter-bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript">
+        function imgPreview(fileDom){
+            // support FileReader or not
+            if (window.FileReader) {
+                var reader = new FileReader();
+            } else {
+                alert("您的设备不支持图片预览功能，如需该功能请升级您的设备！");
+            }
+
+            // get upload file
+            var file = fileDom.files[0];
+            var imageType = /^image\//;
+            // image or not
+            if (!imageType.test(file.type)) {
+                alert("请选择图片！");
+                return;
+            }
+            // read done
+            reader.onload = function(e) {
+                // get image dom
+                var img = document.getElementById("preview");
+                // set the image path to readable image
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</head>
+<body>
+    <div align="center">
+         <form action='/' method='post' enctype='multipart/form-data' style="margin: 30px">
+            <img id="preview" style="margin: 30px;"/>
+            <br />
+            <input type="file" name="file" id="imgFile" onchange="imgPreview(this)" style="margin-bottom: 30px;"/>
+            <br />
+            <input type='submit' class="btn btn-info" value='预测'/>
+            <br />
+        </form>
+    </div>
+</body>
+<script type="text/javascript" src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script>
+</html>
