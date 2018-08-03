@@ -33,18 +33,19 @@ def main():
     optimizer = tf.train.AdamOptimizer().minimize(cost)
     accuracy = model_utils.compute_cost(Y, output)
     global_step = 0
-    epochs = 20
+    epochs = 500
 
     # train model
     saver = tf.train.Saver()
     model_path = os.path.join(current_path, 'log')
-    ckpt = tf.train.get_checkpoint_state(model_path)
     initial_epoch = 0
     time_begin = datetime.datetime.now()
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
         # start training begin latest checkpoint
+        ckpt = tf.train.get_checkpoint_state(model_path)
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
             initial_epoch = int(ckpt.model_checkpoint_path.rsplit('-', 1)[1])
@@ -54,26 +55,28 @@ def main():
                 global_step += 1
                 train_feed = {X: batch_xs, Y: batch_ys}
                 _, train_cost = sess.run([optimizer, cost], feed_dict=train_feed)
-                print("epoch: %3d/%3d, global step: %3d, Training cost: %.5f" %
+                print("epoch: %3d/%3d, global step: %3d, Training cost: %.7f" %
                       ((epoch+1), epochs, global_step, train_cost))
 
             # save the trained model each epoch
-            saver.save(sess, os.path.join(model_path, 'my-model'), global_step=epoch)
+            saver.save(sess, os.path.join(model_path, 'my-model'), global_step=epoch+1)
 
             # compute validation accuracy each epoch
             val_feed = {X: val_x, Y: val_y}
             val_acc = sess.run(accuracy, feed_dict=val_feed)
-            print("epoch: %3d/%3d, global step: %3d, Validation accuracy: %.4f" %
-                  ((epoch+1), epochs, global_step, val_acc))
+            print('----------------------------------------------------------')
+            print("epoch: %3d/%3d, Validation accuracy: %.4f" %
+                  ((epoch+1), epochs, val_acc))
+            print('----------------------------------------------------------')
     time_end = datetime.datetime.now()
-    print('training model finished: %.0f' % ((time_end-time_begin).total_seconds()))
+    print('%d epochs training model finished: %.0fs' % (epochs, (time_end-time_begin).total_seconds()))
 
-    # test model
     with tf.Session() as sess:
-        saver.restore(sess, model_path)
+        ckpt = tf.train.get_checkpoint_state(model_path)
+        saver.restore(sess, ckpt.model_checkpoint_path)
         test_feed = {X: test_x, Y: test_y}
         test_acc = sess.run(accuracy, feed_dict=test_feed)
-        print("test accuracy: %.4f" % test_acc)
+        print("\ntest accuracy: %.4f" % test_acc)
 
 
 if __name__ == '__main__':

@@ -158,6 +158,21 @@ def get_batches(x, y, n_batch=10):
         yield X, Y
 
 
+def finetuning_model(X, Y):
+    """
+    fine tuning the vgg16 model for training the flower recognition
+    :param X: the datasets input
+    :param Y: the dataset label
+    :return: the fine tuning model output
+    """
+
+    # add densely connected layers
+    fc = tf.contrib.layers.fully_connected(X, 256)
+    output = tf.contrib.layers.fully_connected(fc, int(Y.shape[1]), activation_fn=None)
+
+    return output
+
+
 def compute_cost(Y, output):
     """
     compute the cost for the model
@@ -182,24 +197,9 @@ def compute_accuracy(Y, output):
 
     prediction = tf.nn.softmax(output)
     correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
-    accuracy = tf.reduce_mean(correct_prediction, tf.float32)
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     return accuracy
-
-
-def finetuning_model(X, Y):
-    """
-    fine tuning the vgg16 model for training the flower recognition
-    :param X: the datasets input
-    :param Y: the dataset label
-    :return: the fine tuning model output
-    """
-
-    # add densely connected layers
-    fc = tf.contrib.layers.fully_connected(X, 256)
-    output = tf.contrib.layers.fully_connected(fc, int(Y.shape[1]), activation_fn=None)
-
-    return output
 
 
 def main():
