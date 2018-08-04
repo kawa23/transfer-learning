@@ -1,7 +1,9 @@
 import os
 import pickle
+import time
 from io import BytesIO
 import base64
+from functools import lru_cache
 from flask import Flask, render_template, request
 import tensorflow as tf
 
@@ -17,34 +19,53 @@ from vgg_flower.tensorflow_vgg import vgg16
 from vgg_flower.tensorflow_vgg.utils import load_image
 
 
+graph = tf.get_default_graph()
+
+
+@lru_cache()
+def load_vgg16():
+    """
+    load pre-trained vgg16 model
+    :return:
+    """
+
+    # compute vgg16 features using input image
+    global graph
+    with graph.as_default():
+        vgg = vgg16.Vgg16()  # load VGG16 model
+        input = tf.placeholder(tf.float32, [None, 224, 224, 3])
+        vgg.build(input)
+
+    return vgg, input
+
+
 def inference(image):
     """
     model inference by input image
     :param image: input image
     :return: the model output
     """
-
-    # image = load_image(image).reshape(1,224, 224, 3)
-    # compute vgg16 features using input image
-    vgg = vgg16.Vgg16()               # load VGG16 model
-    input = tf.placeholder(tf.float32, [None, 224, 224, 3])
-    with tf.name_scope("content_vgg"):
-        vgg.build(input)
-
+    # input = tf.placeholder(tf.float32, [None, 224, 224, 3])
+    vgg, input = load_vgg16()
     model_path = os.path.join(model_utils.current_path, 'log')
-    # _ = tf.Variable(initial_value='fake_variable')
+    start_time = time.time()
+    print("model inference started")
 
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        features = sess.run(vgg.relu6, feed_dict={input: image})
-        output = model_utils.finetuning_model(features, 5)
-    with tf.Session() as sess:
-        saver = tf.train.Saver()
-        ckpt = tf.train.get_checkpoint_state(model_path)
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        saver.restore(sess, tf.train.latest_checkpoint(model_path))
+    global graph
+    with graph.as_default():
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            features = sess.run(vgg.relu6, feed_dict={input: image})
+            output = model_utils.finetuning_model(features, 5)
+    with graph.as_default():
+        with tf.Session() as sess:
+            saver = tf.train.Saver()
+            ckpt = tf.train.get_checkpoint_state(model_path)
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            saver.restore(sess, tf.train.latest_checkpoint(model_path))
+            print("model inference finished: %ds" % (time.time() - start_time))
 
-        return sess.run(tf.nn.softmax(output)).flatten().tolist()
+            return sess.run(tf.nn.softmax(output)).flatten().tolist()
 
 
 class HandlerLineImage(HandlerBase):

@@ -49,7 +49,7 @@ def compute_vgg16_feature():
             for ii, file in enumerate(files, 1):
                 # load image to batch list
                 img = utils.load_image(os.path.join(class_path, file))
-                batch.append(img)
+                batch.append(img.reshape(1, 224, 224, 3))
                 labels.append(each)
 
                 if ii % batch_size == 0 or ii == len(files):
@@ -174,8 +174,8 @@ def finetuning_model(X, label_num):
     """
 
     # add densely connected layers
-    fc = tf.contrib.layers.fully_connected(X, 256)
-    output = tf.contrib.layers.fully_connected(fc, label_num, activation_fn=None)
+    fc = tf.contrib.layers.fully_connected(X, 256, reuse=tf.AUTO_REUSE, scope="ft_fc1")
+    output = tf.contrib.layers.fully_connected(fc, label_num, activation_fn=None, reuse=tf.AUTO_REUSE, scope="ft_fc2")
 
     return output
 
