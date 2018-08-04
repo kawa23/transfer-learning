@@ -207,13 +207,3 @@ def compute_accuracy(Y, output):
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     return accuracy
-
-
-def main():
-    features, labels = compute_vgg16_feature()
-    save_datasets(features, labels)
-    features, labels = read_datasets(os.path.join(current_path,'features.npy'), os.path.join(current_path, 'labels.txt'))
-
-
-if __name__ == '__main__':
-    main()
