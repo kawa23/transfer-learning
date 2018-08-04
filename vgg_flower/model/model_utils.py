@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import pickle
 import tensorflow as tf
 import numpy as np
 import csv
@@ -47,7 +48,7 @@ def compute_vgg16_feature():
             for ii, file in enumerate(files, 1):
                 # load image to batch list
                 img = utils.load_image(os.path.join(class_path, file))
-                batch.append(img.reshape((1, 224, 224, 3)))
+                batch.append(img)
                 labels.append(each)
 
                 if ii % batch_size == 0 or ii == len(files):
@@ -109,6 +110,11 @@ def onehot_labels(labels):
 
     lb = LabelBinarizer()
     lb.fit(labels)
+
+    # save  labels list: ['daisy' 'dandelion' 'roses' 'sunflowers' 'tulips'] to file, not repeat
+    with open(os.path.join(current_path, 'labels-list.txt'), 'wb') as f:
+        pickle.dump(lb.classes_, f)
+
     labels_vecs = lb.transform(labels)
 
     return labels_vecs
