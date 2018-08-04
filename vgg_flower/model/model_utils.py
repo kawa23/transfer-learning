@@ -19,6 +19,7 @@ parent_path = os.path.abspath(os.path.join(current_path, os.path.pardir))
 def compute_vgg16_feature():
     """
     compute the datasets(flower photos) feature by vgg16
+    reference: https://cosx.org/2017/10/transfer-learning/
     :return: features - images features of vgg16 output
              labels - images labels
     """
