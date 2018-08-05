@@ -1,6 +1,7 @@
 import os
 import pickle
 import time
+import threading
 from io import BytesIO
 import base64
 from functools import lru_cache
@@ -20,6 +21,7 @@ from vgg_flower.tensorflow_vgg.utils import load_image
 
 
 graph = tf.get_default_graph()
+vgg16_loaded = False
 
 
 @lru_cache()
@@ -29,6 +31,8 @@ def load_vgg16():
     :return:
     """
 
+    global vgg16_loaded
+    vgg16_loaded = True
     # compute vgg16 features using input image
     global graph
     with graph.as_default():
@@ -77,7 +81,6 @@ class HandlerLineImage(HandlerBase):
     def __init__(self, image, space=0, offset=0):
         self.space=space
         self.offset=offset
-        # self.image_data = plt.imread(path)
         self.image_data = image
         super(HandlerLineImage, self).__init__()
 
@@ -138,6 +141,13 @@ def index():
         plt.savefig(sio, format='jpeg')
         image_data = base64.encodebytes(sio.getvalue()).decode()
         plt.close()
+
+    if request.method == 'GET':
+        global vgg16_loaded
+        if not vgg16_loaded:
+            t = threading.Thread(target=load_vgg16)
+            t.setDaemon(True)
+            t.start()
 
     return render_template('index.html', image_data=image_data)
 
