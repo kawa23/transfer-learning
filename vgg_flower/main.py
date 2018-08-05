@@ -21,7 +21,6 @@ from vgg_flower.tensorflow_vgg.utils import load_image
 
 
 graph = tf.get_default_graph()
-vgg16_loaded = False
 
 
 @lru_cache()
@@ -31,8 +30,6 @@ def load_vgg16():
     :return:
     """
 
-    global vgg16_loaded
-    vgg16_loaded = True
     # compute vgg16 features using input image
     global graph
     with graph.as_default():
@@ -49,7 +46,7 @@ def inference(image):
     :param image: input image
     :return: the model output
     """
-    # input = tf.placeholder(tf.float32, [None, 224, 224, 3])
+
     vgg, input = load_vgg16()
     model_path = os.path.join(model_utils.current_path, 'log')
     start_time = time.time()
@@ -142,15 +139,13 @@ def index():
         image_data = base64.encodebytes(sio.getvalue()).decode()
         plt.close()
 
-    if request.method == 'GET':
-        global vgg16_loaded
-        if not vgg16_loaded:
-            t = threading.Thread(target=load_vgg16)
-            t.setDaemon(True)
-            t.start()
-
     return render_template('index.html', image_data=image_data)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # loading vgg16 model
+    t = threading.Thread(target=load_vgg16)
+    t.setDaemon(True)
+    t.start()
+
+    app.run(debug=False)
