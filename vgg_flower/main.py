@@ -47,23 +47,21 @@ def inference(image):
     :return: the model output
     """
 
+    global graph
     vgg, input = load_vgg16()
     model_path = os.path.join(model_utils.current_path, 'log')
+
     start_time = time.time()
     print("model inference started")
-
-    global graph
     with graph.as_default():
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
             features = sess.run(vgg.relu6, feed_dict={input: image})
+            print("compute features finished: %ds" % (time.time() - start_time))
+            # in this project, there are 5 kind of flowers to recognize
             output = model_utils.finetuning_model(features, 5)
-    with graph.as_default():
-        with tf.Session() as sess:
             saver = tf.train.Saver()
             ckpt = tf.train.get_checkpoint_state(model_path)
             saver.restore(sess, ckpt.model_checkpoint_path)
-            saver.restore(sess, tf.train.latest_checkpoint(model_path))
             print("model inference finished: %ds" % (time.time() - start_time))
 
             return sess.run(tf.nn.softmax(output)).flatten().tolist()
