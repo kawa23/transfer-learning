@@ -2,9 +2,10 @@ import os
 import sys
 import datetime
 import pickle
+import csv
+
 import tensorflow as tf
 import numpy as np
-import csv
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import StratifiedShuffleSplit
 

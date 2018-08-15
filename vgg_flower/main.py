@@ -4,10 +4,9 @@ import time
 import threading
 from io import BytesIO
 import base64
-from functools import lru_cache
+
 from flask import Flask, render_template, request
 import tensorflow as tf
-
 import matplotlib
 matplotlib.use('Agg')   # disappear the bounding of plt painting
 from matplotlib.transforms import Bbox, TransformedBbox
@@ -16,28 +15,30 @@ from matplotlib.image import BboxImage
 import matplotlib.pyplot as plt
 
 from vgg_flower.model import model_utils
-from vgg_flower.tensorflow_vgg import vgg16
-from vgg_flower.tensorflow_vgg.utils import load_image
+from vgg_flower.tensorflow_vgg.utils import load_image, current_path as vgg16_path
 
 
 graph = tf.get_default_graph()
 
 
-@lru_cache()
 def load_vgg16():
     """
     load pre-trained vgg16 model
-    :return:
+    :return vgg_input, vgg_relu6
     """
 
-    # compute vgg16 features using input image
     global graph
+    restore_graph_def = graph.as_graph_def()
     with graph.as_default():
-        vgg = vgg16.Vgg16()  # load VGG16 model
-        input = tf.placeholder(tf.float32, [None, 224, 224, 3])
-        vgg.build(input)
+        with tf.gfile.GFile(os.path.join(vgg16_path, "quantized_graph.pb"), "rb") as rf:
+            restore_graph_def.ParseFromString(rf.read())
+        tf.import_graph_def(restore_graph_def, name="")
 
-    return vgg, input
+    # get necessary tensors
+    vgg_input = graph.get_tensor_by_name("input_rgb:0")
+    vgg_relu6 = graph.get_tensor_by_name("relu6:0")
+
+    return vgg_input, vgg_relu6
 
 
 def inference(image):
@@ -48,14 +49,14 @@ def inference(image):
     """
 
     global graph
-    vgg, input = load_vgg16()
+    vgg_input, vgg_relu6 = load_vgg16()
     model_path = os.path.join(model_utils.current_path, 'log')
 
     start_time = time.time()
     print("model inference started")
     with graph.as_default():
         with tf.Session() as sess:
-            features = sess.run(vgg.relu6, feed_dict={input: image})
+            features = sess.run(vgg_relu6, feed_dict={vgg_input: image})
             print("compute features finished: %ds" % (time.time() - start_time))
             # in this project, there are 5 kind of flowers to recognize
             output = model_utils.finetuning_model(features, 5)

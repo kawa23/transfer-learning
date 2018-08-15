@@ -68,7 +68,7 @@ class Vgg16:
 
         self.fc6 = self.fc_layer(self.pool5, "fc6")
         assert self.fc6.get_shape().as_list()[1:] == [4096]
-        self.relu6 = tf.nn.relu(self.fc6)
+        self.relu6 = tf.nn.relu(self.fc6, name='relu6')
 
         self.fc7 = self.fc_layer(self.relu6, "fc7")
         self.relu7 = tf.nn.relu(self.fc7)

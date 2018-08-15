@@ -1,6 +1,7 @@
 import os
 import threading
 import datetime
+
 import tensorflow as tf
 
 from vgg_flower.model import model_utils
@@ -33,7 +34,7 @@ def main():
     optimizer = tf.train.AdamOptimizer().minimize(cost)
     accuracy = model_utils.compute_cost(Y, output)
     global_step = 0
-    epochs = 500
+    epochs = 1000
 
     # train model
     saver = tf.train.Saver()

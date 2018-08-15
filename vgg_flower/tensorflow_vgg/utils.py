@@ -1,10 +1,15 @@
+import os
+
 import skimage
 import skimage.io
 import skimage.transform
 import numpy as np
+import tensorflow as tf
 
+from vgg_flower.tensorflow_vgg.vgg16 import Vgg16
 
 # synset = [l.strip() for l in open('synset.txt').readlines()]
+current_path = os.path.dirname(__file__)
 
 
 # returns image of shape [224, 224, 3]
@@ -68,5 +73,36 @@ def test():
     skimage.io.imsave("./test_data/test/output.jpg", img)
 
 
+def vgg16_pb():
+    """
+    convert vgg16 model to tensorflow pb format file
+    :return:
+    """
+
+    model = Vgg16(os.path.join(current_path, "vgg16.npy"))
+    rgb_batch = tf.placeholder(tf.float32, shape=[None, 224, 224, 3], name="input_rgb")
+    model.build(rgb_batch)
+
+    graph = tf.get_default_graph()
+    # serialize to disk
+    graph_def = graph.as_graph_def()
+    with tf.gfile.GFile(os.path.join(current_path, "vgg16.pb"), "wb") as wf:
+        wf.write(graph_def.SerializeToString())
+
+    del graph, graph_def
+
+
 if __name__ == "__main__":
-    test()
+    # test()
+    vgg16_pb()
+    restore_graph = tf.Graph()
+    restore_graph_def = restore_graph.as_graph_def()
+    with restore_graph.as_default():
+        with tf.gfile.GFile("vgg16.pb", "rb") as rf:
+            restore_graph_def.ParseFromString(rf.read())
+        tf.import_graph_def(restore_graph_def, name="")
+
+    # get necessary tensors
+    restore_rgb_input = restore_graph.get_tensor_by_name("input_rgb:0")
+    restore_prob_tensor = restore_graph.get_tensor_by_name("relu6:0")
+    print(restore_prob_tensor)
